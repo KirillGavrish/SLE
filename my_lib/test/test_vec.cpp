@@ -1,16 +1,15 @@
 #include <gtest/gtest.h>
 
-#include <gtest/gtest.h>
-
-#include <my/code/vec.h>
-//#include <my/code/Matrix.h>
-//#include <my/code/CSR_matrix.h>
+#include "../my/vec.h"
+//#include <my/Matrix.h>
+//#include <my/CSR_matrix.h>
 
 
 TEST(vec, plus) 
 {
-    vec<int> a = {1};
-    vec<int> b = {5};
+    vec<int> a = {1, 4};
+    vec<int> b = {5, 2};
     vec<int> c = a + b;
-    EXPECT_IQ(c[0], 6);
+    EXPECT_EQ(c[0], 6);
+    EXPECT_EQ(c[1], 6);
 }

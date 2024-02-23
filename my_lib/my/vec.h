@@ -46,7 +46,7 @@ template<typename T>
 vec<T> operator*(T n, vec<T> const &v) {return v * n;}
 
 template <typename T>
-T max(vec<t> const &v)
+T max(vec<T> const &v)
 {
     T max = v[0];
     for (std::size_t i = 0; i < v.size(); ++i)
