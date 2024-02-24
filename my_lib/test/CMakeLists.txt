@@ -1,17 +1,18 @@
 cmake_minimum_required(VERSION 3.20)
+project(testmy_lib)
 
 enable_testing()
 find_package(GTest REQUIRED)
 
 file(GLOB_RECURSE TEST_SOURCES test_*.cpp)
 
+add_subdirectory(../ dim)
 foreach (TEST_FILE IN LISTS TEST_SOURCES)
     get_filename_component(TEST_FILE_NAME ${TEST_FILE} NAME_WE)
     set(EXECUTABLE_NAME run_${TEST_FILE_NAME})
 
     add_executable(${EXECUTABLE_NAME} ${TEST_FILE})
     
-    add_subdirectory(../ dim/)
     target_link_libraries(${EXECUTABLE_NAME} PRIVATE my_lib GTest::gtest_main)
     if(CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR
        CMAKE_CXX_COMPILER_ID MATCHES "GNU")
