@@ -11,25 +11,20 @@ class CSR_matrix
     vec<std::size_t> rows;
 public:
     CSR_matrix();
-    CSR_matrix(Matrix<T>     const &);
-//  CSR_matrix(CSR_matrix<T> const &);
-
-
-    T operator()(std::size_t, std::size_t) const;
+    CSR_matrix(Matrix<T> const &);
 
     vec<T>           get_vals() const;
     vec<std::size_t> get_cols() const;
     vec<std::size_t> get_rows() const;
+    
+    T lambda_max() const;
 
-    auto insert(std::size_t, std::size_t, T);
-    auto erase(std::size_t, std::size_t);
-
-    CSR_matrix &operator+=(CSR_matrix<T> const &);
-    CSR_matrix &operator-=(CSR_matrix<T> const &);
-    CSR_matrix &operator*=(CSR_matrix<T> const &);
+    vec<T> operator*(vec<T> const &) const;
+    T operator()(std::size_t, std::size_t) const;
+    
+    bool check(vec<T> const &, vec<std::size_t> const &, vec<std::size_t> const &) const;
 };
 
-//CSR_matrix &operator*(CSR_matrix const &, CSR_matrix const &);
 
 template <typename T>
 CSR_matrix<T>::CSR_matrix()
@@ -37,8 +32,7 @@ CSR_matrix<T>::CSR_matrix()
       cols(0),
       rows(0)
     {}
-      
-
+ 
 template <typename T>
 CSR_matrix<T>::CSR_matrix(Matrix<T> const &M)    
 {
@@ -47,17 +41,20 @@ CSR_matrix<T>::CSR_matrix(Matrix<T> const &M)
     {
         std::size_t row_counter = 0;
         for (std::size_t j = 0; j < M.get_width(); ++j)
-        {
             if (M(i, j) > 0)
             {
                 vals.push_back(M(i, j));
                 cols.push_back(j);
                 ++row_counter;
             }
-        }
+
         rows.push_back(rows.back() + row_counter);
     }
 }
+
+template <typename T>
+bool CSR_matrix<T>::check(vec<T> const &values, vec<std::size_t> const &columns, vec<std::size_t> const &rws) const
+    {return vals == values && cols == columns && rows == rws;} 
 
 template <typename T>
 T CSR_matrix<T>::operator()(std::size_t i, std::size_t j) const
@@ -67,12 +64,116 @@ T CSR_matrix<T>::operator()(std::size_t i, std::size_t j) const
     return 0;
 }
 
+template <typename T> vec<T>           CSR_matrix<T>::get_vals() const {return vals;}
+template <typename T> vec<std::size_t> CSR_matrix<T>::get_cols() const {return cols;}
+template <typename T> vec<std::size_t> CSR_matrix<T>::get_rows() const {return rows;}
+
+template<typename T>
+vec<T> CSR_matrix<T>::operator*(vec<T> const &v) const
+{
+	vec<T> res = vec<T>(rows.size() - 1);
+	for(std::size_t row = 0; row < rows.size() - 1; ++row)
+    {
+		T sum = 0;
+		for(std::size_t i = rows[row]; i < rows[row + 1]; ++i)
+			sum += vals[i] * v[cols[i]];
+		res[row] = sum;
+	}
+	return res;
+}
+
 template <typename T>
-vec<T>           CSR_matrix<T>::get_vals() const {return vals;}
+T CSR_matrix<T>::lambda_max() const
+{
+    T tol = 1e-20;
+    vec<T> r(max(cols));
+    for (std::size_t i = 0; i < r.size(); ++i)
+        r[i] = 1;
+    
+    T mu = 0, prev;
+    for (std::size_t it = 0; it < 10000; ++it)
+    {
+        prev = mu;
+        r = ((*(this)) * r) / norm((*(this)) * r);
+        mu = dot(r, (*(this)) * r) / dot(r , r);
+        if (mu - prev < tol) break;
+    }
+
+    return mu;
+
+}
+
 template <typename T>
-vec<std::size_t> CSR_matrix<T>::get_cols() const {return cols;}
+vec<T> Simple_Iteration_Method(CSR_matrix<T> const &A, vec<T> const &b, vec<T> const &x0, T const &tol, std::size_t const &Nmax)
+{
+    T tau = 1 / A.lambda_max();
+    vec<T> x = x0;
+    vec<T> r; 
+    for (std::size_t it = 0; it < Nmax; ++it)
+    {
+        r = (A * x) - b;
+        if (norm(r) < tol) break;
+
+        x = x - tau * r;
+    }
+    return x;
+}
+
 template <typename T>
-vec<std::size_t> CSR_matrix<T>::get_rows() const {return rows;}
+vec<T> Jacobi_Method(CSR_matrix<T> const &A, vec<T> const &b, vec<T> const &x0, T const &tol, std::size_t const &Nmax)
+{   
+    vec<T> x = x0;
+    vec<T> res;
+    T d;
+
+    for (std::size_t it = 0; it < Nmax; ++it)
+    {
+        res = b;
+        for (std::size_t i = 0; i < x.size(); ++i)
+        {
+            for (std::size_t k = A.get_rows()[i]; k < A.get_rows()[i+1]; ++k)
+            {
+                if (i != A.get_cols()[k])
+                    res[i] -= A.get_vals()[k] * x[A.get_cols()[k]];
+                else
+                    d = A.get_vals()[k];
+            }
+            res[i] /= d;
+        }
+
+        x = res;
+        if (max(A*x - b) < tol) break;
+    }
+
+    return x;
+}
+
+template <typename T>
+vec<T> Gauss_Zejdel_Method(CSR_matrix<T> const &A, vec<T> const &b, vec<T> const &x0, T const &tol, std::size_t const &Nmax)
+{
+    vec<T> x = x0;
+    T d;
+
+    for (std::size_t it = 0; it < Nmax; ++it)
+    {
+        for (std::size_t i = 0; i < x.size(); ++i)
+        {
+            x[i] = b[i];
+            for (std::size_t k = A.get_rows()[i]; k < A.get_rows()[i+1]; ++k)
+            {
+                if (i != A.get_cols()[k])
+                    x[i] -= A.get_vals()[k] * x[A.get_cols()[k]];    
+                else
+                    d = A.get_vals()[k];
+            }
+            x[i] /= d;
+        }
+
+        if (max(A*x - b) < tol) break;
+    }
+
+    return x;
+}
 
 /*
 template <typename T>
@@ -84,7 +185,7 @@ CSR_matrix<T>::CSR_matrix(CSR_matrix<T> const &other)
 
 
 template <typename T>
-CSR_matrix<T> &CSR_matrix<T>::operator=(CSR_matrix<T> const &other) 
+CSR_matrix<T> &CSR_matrix<T>::operator=(CSR_matrix<T> const &other)
 {
     if (*this != other)
     {
@@ -93,7 +194,6 @@ CSR_matrix<T> &CSR_matrix<T>::operator=(CSR_matrix<T> const &other)
     }
     return *this;
 }
-*/
 
 template <typename T>
 auto CSR_matrix<T>::insert(std::size_t i, std::size_t j, T val)
@@ -107,7 +207,7 @@ auto CSR_matrix<T>::insert(std::size_t i, std::size_t j, T val)
             {
                 std::size_t counter = 0;
                 for (auto it = vals.begin(); it != vals.end(); ++it, ++counter)
-                    if (counter == i * max(cols) + j) 
+                    if (counter == i * max(cols) + j)
                         {vals.insert(it, val); break;}
 
                 counter = 0;
@@ -180,7 +280,7 @@ template <typename T>
 CSR_matrix<T> &CSR_matrix<T>::operator*=(CSR_matrix<T> const &other)
 {
     for (std::size_t i = 0; i < std::max(rows.size(), other.rows().size()); ++i)
-        for (std::size_t j = 0; j < std::max(max(cols) , max(other.columns())); ++j)        
+        for (std::size_t j = 0; j < std::max(max(cols) , max(other.columns())); ++j)
         {
             if ((*this)(i, j) * other(i, j) != T(0))
                 {*this = (*this).insert(i, j, (*this)(i, j) * other(i, j)); continue;}
@@ -189,8 +289,4 @@ CSR_matrix<T> &CSR_matrix<T>::operator*=(CSR_matrix<T> const &other)
         }
     return *this;
 }
-
-
-
-
-
+*/

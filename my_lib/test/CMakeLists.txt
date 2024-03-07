@@ -6,7 +6,7 @@ find_package(GTest REQUIRED)
 
 file(GLOB_RECURSE TEST_SOURCES test_*.cpp)
 
-add_subdirectory(../ dim)
+#add_subdirectory(../ dim)
 foreach (TEST_FILE IN LISTS TEST_SOURCES)
     get_filename_component(TEST_FILE_NAME ${TEST_FILE} NAME_WE)
     set(EXECUTABLE_NAME run_${TEST_FILE_NAME})

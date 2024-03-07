@@ -5,6 +5,6 @@ add_subdirectory(my)
 
 if (WITH_TESTS)
     enable_testing()
-    add_subdirectory(tests)
+    add_subdirectory(test)
 endif ()
 

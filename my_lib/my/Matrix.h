@@ -19,11 +19,13 @@ public:
     std::size_t get_height() const;
 
     vec<T> vals() const;
-    vec<T> pos_vals() const;
-    
+//    vec<T> pos_vals() const;
+    /*
     Matrix<T> &operator*=(Matrix<T> const &);
     Matrix<T> &operator+=(Matrix<T> const &);
     Matrix<T> &operator-=(Matrix<T> const &);
+    */
+    vec<T> operator*(const vec<T> &) const;
 };
 
 
@@ -33,7 +35,7 @@ T Matrix<T>::operator()(std::size_t i, std::size_t j) const {return elements[i *
 
 template <typename T>
 vec<T> Matrix<T>::vals() const {return elements;};
-
+/*
 template <typename T>
 vec<T> Matrix<T>::pos_vals() const
 {
@@ -44,7 +46,7 @@ vec<T> Matrix<T>::pos_vals() const
             res.push_back(values[i]);
     return res;
 }
-
+*/
 template <typename T>
 Matrix<T>::Matrix(std::size_t m, std::size_t n)
     : elements(m*n),
@@ -63,6 +65,25 @@ std::size_t Matrix<T>::get_height() const {return elements.size() / width;}
 template <typename T>
 std::size_t Matrix<T>::get_width() const {return width;}
 
+template<typename T>
+vec<T> Matrix<T>::operator*(vec<T> const &v) const
+{
+	vec<T> res = vec<T>(get_height());
+    T res_i;
+	for(std::size_t i = 0;  i < elements.size() / width; ++i)
+    {
+		res_i = 0;
+		for(std::size_t j = 0; j < width; ++j)
+			res_i += (*this)(i, j) * v[i];
+		res[i] = res_i;
+	}
+	return res;
+}
+
+
+
+
+/*
 template <typename T>
 vec<T> operator*(Matrix<T> const &M, vec<T> const &v)
 {
@@ -107,9 +128,15 @@ Matrix<T> &Matrix<T>::operator-=(Matrix<T> const &other)
     return *this;
 }
 
+
+
 template <typename T>
 Matrix<T> operator*(Matrix<T> const &a, Matrix<T> const &b) {Matrix<T> c = a; return c *= b;}
 template <typename T>
 Matrix<T> operator-(Matrix<T> const &a, Matrix<T> const &b) {Matrix<T> c = a; return c -= b;}
 template <typename T>
 Matrix<T> operator+(Matrix<T> const &a, Matrix<T> const &b) {Matrix<T> c = a; return c += b;}
+*/
+
+
+

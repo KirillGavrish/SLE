@@ -1,6 +1,7 @@
 #pragma once
-
+#include <iostream>
 #include <vector>
+#include <cmath>
 
 template<typename T>
 using vec = std::vector<T>;
@@ -43,13 +44,36 @@ vec<T> operator*(vec<T> const &v, T n)
 }
 
 template<typename T>
+vec<T> operator/(vec<T> const &v, T n) {return v * (1/n);}
+
+template<typename T>
 vec<T> operator*(T n, vec<T> const &v) {return v * n;}
+
+template <typename T>
+T abs(T const &a)
+{
+    if (a > 0) return a;
+    else return -a;
+}
 
 template <typename T>
 T max(vec<T> const &v)
 {
-    T max = v[0];
+    T max = abs(v[0]);
     for (std::size_t i = 0; i < v.size(); ++i)
-        if (max < v[i]) max = v[i];
+        if (max < abs(v[i])) max = abs(v[i]);
     return max;
 }
+
+template <typename T>
+std::ostream& operator<<(std::ostream& os, vec<T> const &vec) 
+{
+    for (std::size_t i = 0; i < vec.size(); i++)
+        os << vec[i] << " ";
+    std::cout << std::endl;
+    return os;
+}
+
+template <typename T>
+T norm(vec<T> const &v) {return sqrt(dot(v, v));}
+
