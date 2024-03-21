@@ -16,16 +16,6 @@ TEST(CSR_matrix, constructor_matrix)
     EXPECT_EQ(true, CSR.check(vals, cols, rows));
 }
 
-/*
-TEST(CSR_matrix, get_vals)
-{
-    vec<int> vals = {1, 0, 3, 0, 5, 0, 7, 0, 9};
-    Matrix<int> M(vals , 3);
-    CSR_matrix<int> CSR(M);
-    EXPECT_EQ(CSR.get_vals(), M.pos_vals());
-}
-*/
-
 TEST(CSR_matrix, get_element)
 {
     vec<int> vals = {1, 0, 3, 0, 5, 0, 7, 0, 9};
@@ -74,6 +64,21 @@ TEST(CSR_matrix, Simple_Iteration_Method)
         EXPECT_NEAR(expected[j], x[j], 0.01);
 }
 
+TEST(CSR_matrix, SIM_Chebyshev)
+{
+    vec<double> vals = {1, 2, 0, 2, 6, 1, 0, 1, 10};
+    Matrix<double> M(vals , 3);
+    CSR_matrix<double> A(M);
+
+    vec<double> x0 = {4, 4, 4};
+    vec<double> b = {5, 17, 32};
+    double tol = 1e-20;
+    vec<double> x = SIM_Chebyshev(A, b, x0, tol, 10000, 3, 0.287, 10.261);
+    vec<double> expected = {1, 2, 3};
+    for (std::size_t j = 0; j < 3; ++j)
+        EXPECT_NEAR(expected[j], x[j], 0.01);
+}
+
 TEST(CSR_matrix, Jacobi_Method)
 {
     vec<double> vals = {1, 2, 0, 2, 6, 1, 0, 1, 10};
@@ -104,7 +109,56 @@ TEST(CSR_matrix, Gauss_Zeidel_Method)
         EXPECT_NEAR(expected[j], x[j], 0.01);
 }
 
+TEST(CSR_matrix , lambda_max)
+{
+    vec<double> vals = {76, 0, 2, 0, 3, 58, 0, 0, 0, 0, 84, 0, 3, 0, 0, 64}; 
+    Matrix<double> M(vals , 4);
+    CSR_matrix<double> A(M);
+    EXPECT_NEAR(A.lambda_max(), 84, 1e-6);
+}
 /*
+TEST(CSR_matrix, kr5)
+{
+    vec<double> vals = {50, 0, 0, 6, 0, 87, 6, 0, 0, 0, 59, 0, 0, 0, 6, 74}; 
+    Matrix<double> M(vals , 3);
+    CSR_matrix<double> A(M);
+
+    vec<double> x0 = {0, 0, 0, 0};
+    vec<double> b = {1, 1, 1, 1};
+    double tol = 1e-12;
+
+    vec<std::size_t> it = Simple_Iteration_Method(A, b, x0, tol, 10000);
+
+    
+}
+
+
+
+TEST(CSR_matrix, kr1)
+{
+    vec<double> vals = {0, 0, 0, 2, 2, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0};
+    Matrix<double> M(vals , 4);
+    CSR_matrix<double> A(M);
+
+    std::cout << A.get_vals() << std::endl;
+    std::cout << A.get_cols() << std::endl;
+    std::cout << A.get_rows();
+}
+
+
+TEST(CSR_matrix, kr3)
+{
+    vec<double> vals = {79, 9, 0, 6, 0, 55, 2, 6, 0, 3, 72, 3, 8, 0, 0, 81};
+    Matrix<double> M(vals , 4);
+    CSR_matrix<double> A(M);
+
+    vec<double> x0 = {367326700, 0, 0, 0};
+    vec<double> b = {5, 3, 2, 7};
+    double tol = 1e-20;
+    std::size_t it = Gauss_Zejdel_Method_kr(A, b, x0, tol, 10000);
+    std::cout << it << std::endl;
+}
+
 TEST(CSR_matrix, get_rows)
 {
     vec<int> vals = {1, 0, 3, 0, 5, 0, 7, 0, 9};

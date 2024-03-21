@@ -2,6 +2,8 @@
 #include <iostream>
 #include <vector>
 #include <cmath>
+#include <algorithm>
+#include <numbers>
 
 template<typename T>
 using vec = std::vector<T>;

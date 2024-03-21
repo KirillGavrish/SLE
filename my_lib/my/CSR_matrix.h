@@ -1,7 +1,5 @@
 #pragma once 
-#include "vec.h"
 #include "Matrix.h"
-#include <algorithm>
 
 template <typename T>
 class CSR_matrix
@@ -175,25 +173,95 @@ vec<T> Gauss_Zejdel_Method(CSR_matrix<T> const &A, vec<T> const &b, vec<T> const
     return x;
 }
 
+template <typename T>
+vec<T> SIM_Chebyshev(CSR_matrix<T> const &A, vec<T> const &b, vec<T> const &x0, T const &tol, std::size_t const &Nmax, std::size_t const &r, T const &lambda_min, T const &lambda_max)
+{
+    vec<T> tau(std::size_t(std::pow(2,r)));
+    std::size_t n = tau.size();
+    T xi;
+    for (std::size_t i = 0; i < n; ++i)
+    {
+        xi = (lambda_max + lambda_min)/2 + (lambda_max - lambda_min)/2 * std::cos((2*i + 1) / (2*n) * std::numbers::pi); tau[i] = 1 / xi;
+    }
+
+    vec<std::size_t> permut(n); permut[0] = 0; permut[1] = 1;
+    vec<std::size_t> permut_new(n);
+    for (std::size_t numbers = 2; numbers < n; numbers *= 2)
+    {
+        for (std::size_t i = 0; i < numbers; ++i)
+        {
+            permut_new[i*2] = permut[i];
+            permut_new[i*2 + 1] = numbers * 2 - 1 - permut[i];
+        }
+        permut = permut_new;
+    }
+       
+    vec<T> x = x0;
+    vec<T> rx = (A * x) - b;
+    for (std::size_t it = 0; it < Nmax; ++it)
+    {
+        if (norm(rx) < tol) break;
+
+        for (std::size_t const &i : permut)
+        {
+            x = x - tau[i] * rx;
+            rx = (A * x) - b;
+        }
+    }
+    return x;
+}
+
+
+
 /*
 template <typename T>
-CSR_matrix<T>::CSR_matrix(CSR_matrix<T> const &other)
-    vals(other.values()),
-    cols(other.columns()),
-    rows(other.rows())
-    {}
-
-
-template <typename T>
-CSR_matrix<T> &CSR_matrix<T>::operator=(CSR_matrix<T> const &other)
+std::size_t  Gauss_Zejdel_Method_kr(CSR_matrix<T> const &A, vec<T> const &b, vec<T> const &x0, T const &tol, std::size_t const &Nmax)
 {
-    if (*this != other)
+    vec<T> x = x0;
+    T d;
+
+    for (std::size_t it = 0; it < Nmax; ++it)
     {
-        this->~CSR_matrix<T>()
-        this->CSR_matrix(other);
+        for (std::size_t i = 0; i < x.size(); ++i)
+        {
+            x[i] = b[i];
+            for (std::size_t k = A.get_rows()[i]; k < A.get_rows()[i+1]; ++k)
+            {
+                if (i != A.get_cols()[k])
+                    x[i] -= A.get_vals()[k] * x[A.get_cols()[k]];
+                else
+                    d = A.get_vals()[k];
+            }
+            x[i] /= d;
+        }
+        
+        if (max(A*x - b) < tol) break;
     }
-    return *this;
+
+    vec<T> x1 = x0;
+    
+    std::size_t it = 0;
+    while(norm(x1 - x) > (norm(x)/1000))
+    {
+        for (std::size_t i = 0; i < x1.size(); ++i)
+        {
+            x1[i] = b[i];
+            for (std::size_t k = A.get_rows()[i]; k < A.get_rows()[i+1]; ++k)
+            {
+                if (i != A.get_cols()[k])
+                    x1[i] -= A.get_vals()[k] * x1[A.get_cols()[k]];
+                else
+                    d = A.get_vals()[k];
+            }
+            x1[i] /= d;
+        }
+        it++;
+    }
+
+
+    return it;
 }
+
 
 template <typename T>
 auto CSR_matrix<T>::insert(std::size_t i, std::size_t j, T val)
