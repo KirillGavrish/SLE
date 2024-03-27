@@ -211,6 +211,62 @@ vec<T> SIM_Chebyshev(CSR_matrix<T> const &A, vec<T> const &b, vec<T> const &x0, 
     return x;
 }
 
+template <typename T>
+vec<T> Steepest_Descent(CSR_matrix<T> const &A, vec<T> const &b, vec<T> const &x0, T const &tol, std::size_t const &Nmax)
+{
+    T tau;
+    vec<T> x = x0;
+    vec<T> r;
+    for (std::size_t it = 0; it < Nmax; ++it)
+    {
+        r = (A * x) - b;
+        if (norm(r) < tol) break;
+        
+        tau = dot(r, r) / dot(r, A * r);
+        x = x - tau * r;
+    }
+    return x;
+}
+
+template <typename T>
+vec<T> Sym_Gauss_Zejdel_Method(CSR_matrix<T> const &A, vec<T> const &b, vec<T> const &x0, T const &tol, std::size_t const &Nmax)
+{
+    vec<T> x = x0;
+    T d;
+
+    for (std::size_t it = 0; it < Nmax; ++it)
+    {
+        for (std::size_t i = 0; i < x.size(); ++i)
+        {
+            x[i] = b[i];
+            for (std::size_t k = A.get_rows()[i]; k < A.get_rows()[i+1]; ++k)
+            {
+                if (i != A.get_cols()[k])
+                    x[i] -= A.get_vals()[k] * x[A.get_cols()[k]];
+                else
+                    d = A.get_vals()[k];
+            }
+            x[i] /= d;
+        }
+
+        for (std::size_t i = x.size() - 1; i > 0; --i)
+        {
+            x[i] = b[i];
+            for (std::size_t k = A.get_rows()[i]; k < A.get_rows()[i+1]; ++k)
+            {
+                if (i != A.get_cols()[k])
+                    x[i] -= A.get_vals()[k] * x[A.get_cols()[k]];
+                else
+                    d = A.get_vals()[k];
+            }
+            x[i] /= d;
+        }
+
+        if (max(A*x - b) < tol) break;
+    }
+
+    return x;
+}
 
 
 /*

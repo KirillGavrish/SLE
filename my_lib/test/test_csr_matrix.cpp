@@ -116,6 +116,36 @@ TEST(CSR_matrix , lambda_max)
     CSR_matrix<double> A(M);
     EXPECT_NEAR(A.lambda_max(), 84, 1e-6);
 }
+
+TEST(CSR_matrix, Steepest_Descent)
+{
+    vec<double> vals = {1, 2, 0, 2, 6, 1, 0, 1, 10};
+    Matrix<double> M(vals , 3);
+    CSR_matrix<double> A(M);
+
+    vec<double> x0 = {4, 4, 4};
+    vec<double> b = {5, 17, 32};
+    double tol = 1e-20;
+    vec<double> x = Steepest_Descent(A, b, x0, tol, 10000);
+    vec<double> expected = {1, 2, 3};
+    for (std::size_t j = 0; j < 3; ++j)
+        EXPECT_NEAR(expected[j], x[j], 0.01);
+}
+
+TEST(CSR_matrix, Sym_Gauss_Zeidel_Method)
+{
+    vec<double> vals = {1, 2, 0, 2, 6, 1, 0, 1, 10};
+    Matrix<double> M(vals , 3);
+    CSR_matrix<double> A(M);
+
+    vec<double> x0 = {4, 4, 4};
+    vec<double> b = {5, 17, 32};
+    double tol = 1e-20;
+    vec<double> x = Sym_Gauss_Zejdel_Method(A, b, x0, tol, 10000);
+    vec<double> expected = {1, 2, 3};
+    for (std::size_t j = 0; j < 3; ++j)
+        EXPECT_NEAR(expected[j], x[j], 0.01);
+}
 /*
 TEST(CSR_matrix, kr5)
 {
