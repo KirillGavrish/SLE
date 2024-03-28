@@ -233,10 +233,11 @@ vec<T> Sym_Gauss_Zejdel_Method(CSR_matrix<T> const &A, vec<T> const &b, vec<T> c
 {
     vec<T> x = x0;
     T d;
+    std::size_t n = x.size(), I;
 
     for (std::size_t it = 0; it < Nmax; ++it)
     {
-        for (std::size_t i = 0; i < x.size(); ++i)
+        for (std::size_t i = 0; i < n; ++i)
         {
             x[i] = b[i];
             for (std::size_t k = A.get_rows()[i]; k < A.get_rows()[i+1]; ++k)
@@ -249,17 +250,18 @@ vec<T> Sym_Gauss_Zejdel_Method(CSR_matrix<T> const &A, vec<T> const &b, vec<T> c
             x[i] /= d;
         }
 
-        for (std::size_t i = x.size() - 1; i > 0; --i)
+        for (std::size_t i = 0; i < n; ++i)
         {
-            x[i] = b[i];
-            for (std::size_t k = A.get_rows()[i]; k < A.get_rows()[i+1]; ++k)
+            I = n - i;
+            x[I] = b[I];
+            for (std::size_t k = A.get_rows()[I]; k < A.get_rows()[I+1]; ++k)
             {
-                if (i != A.get_cols()[k])
-                    x[i] -= A.get_vals()[k] * x[A.get_cols()[k]];
+                if (I != A.get_cols()[k])
+                    x[I] -= A.get_vals()[k] * x[A.get_cols()[k]];
                 else
                     d = A.get_vals()[k];
             }
-            x[i] /= d;
+            x[I] /= d;
         }
 
         if (max(A*x - b) < tol) break;
