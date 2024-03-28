@@ -252,7 +252,7 @@ vec<T> Sym_Gauss_Zejdel_Method(CSR_matrix<T> const &A, vec<T> const &b, vec<T> c
 
         for (std::size_t i = 0; i < n; ++i)
         {
-            I = n - i;
+            I = n - i - 1;
             x[I] = b[I];
             for (std::size_t k = A.get_rows()[I]; k < A.get_rows()[I+1]; ++k)
             {
