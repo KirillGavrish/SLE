@@ -94,7 +94,7 @@ TEST(CSR_matrix, Jacobi_Method)
         EXPECT_NEAR(expected[j], x[j], 0.01);
 }
 
-TEST(CSR_matrix, Gauss_Zeidel_Method)
+TEST(CSR_matrix, Gauss_Zejdel_Method)
 {
     vec<double> vals = {1, 2, 0, 2, 6, 1, 0, 1, 10};
     Matrix<double> M(vals , 3);
@@ -132,7 +132,7 @@ TEST(CSR_matrix, Steepest_Descent)
         EXPECT_NEAR(expected[j], x[j], 0.01);
 }
 
-TEST(CSR_matrix, Sym_Gauss_Zeidel_Method)
+TEST(CSR_matrix, Sym_Gauss_Zejdel_Method)
 {
     vec<double> vals = {1, 2, 0, 2, 6, 1, 0, 1, 10};
     Matrix<double> M(vals , 3);
@@ -142,6 +142,81 @@ TEST(CSR_matrix, Sym_Gauss_Zeidel_Method)
     vec<double> b = {5, 17, 32};
     double tol = 1e-20;
     vec<double> x = Sym_Gauss_Zejdel_Method(A, b, x0, tol, 10000);
+    vec<double> expected = {1, 2, 3};
+    for (std::size_t j = 0; j < 3; ++j)
+        EXPECT_NEAR(expected[j], x[j], 0.01);
+}
+
+TEST(CSR_matrix, Chebyshev2_SIM)
+{
+    vec<double> vals = {0.09, 0.18, 0, 0.18, 0.54, 0.09, 0, 0.09, 0.9};
+    Matrix<double> M(vals , 3);
+    CSR_matrix<double> A(M);
+
+    vec<double> x0 = {0, 0, 0};
+    vec<double> b = {0.45, 1.53, 2.88};
+    double tol = 1e-20;
+    vec<double> x = Chebyshev2(A, b, x0, tol, 10000, 0.9, Simple_Iteration_Method<double>);
+    vec<double> expected = {1, 2, 3};
+    for (std::size_t j = 0; j < 3; ++j)
+        EXPECT_NEAR(expected[j], x[j], 0.01);
+} 
+/*
+TEST(CSR_matrix, Chebyshev2_JacobiMethod)
+{
+    vec<double> vals = {0.09, 0.18, 0, 0.18, 0.54, 0.09, 0, 0.09, 0.9};
+    Matrix<double> M(vals , 3);
+    CSR_matrix<double> A(M);
+
+    vec<double> x0 = {0, 0, 0};
+    vec<double> b = {0.45, 1.53, 2.88};
+    double tol = 1e-20;
+    vec<double> x = Chebyshev2(A, b, x0, tol, 10000, 0.9, Jacobi_Method<double>);
+    vec<double> expected = {1, 2, 3};
+    for (std::size_t j = 0; j < 3; ++j)
+        EXPECT_NEAR(expected[j], x[j], 0.01);
+}
+*/
+TEST(CSR_matrix, Chebyshev2_GZ)
+{
+    vec<double> vals = {0.09, 0.18, 0, 0.18, 0.54, 0.09, 0, 0.09, 0.9};
+    Matrix<double> M(vals , 3);
+    CSR_matrix<double> A(M);
+
+    vec<double> x0 = {0, 0, 0};
+    vec<double> b = {0.45, 1.53, 2.88};
+    double tol = 1e-20;
+    vec<double> x = Chebyshev2(A, b, x0, tol, 10000, 0.9, Gauss_Zejdel_Method<double>);
+    vec<double> expected = {1, 2, 3};
+    for (std::size_t j = 0; j < 3; ++j)
+        EXPECT_NEAR(expected[j], x[j], 0.01);
+}
+
+TEST(CSR_matrix, Chebyshev2_SGD)
+{
+    vec<double> vals = {0.09, 0.18, 0, 0.18, 0.54, 0.09, 0, 0.09, 0.9};
+    Matrix<double> M(vals , 3);
+    CSR_matrix<double> A(M);
+
+    vec<double> x0 = {0, 0, 0};
+    vec<double> b = {0.45, 1.53, 2.88};
+    double tol = 1e-20;
+    vec<double> x = Chebyshev2(A, b, x0, tol, 10000, 0.9, Steepest_Descent<double>);
+    vec<double> expected = {1, 2, 3};
+    for (std::size_t j = 0; j < 3; ++j)
+        EXPECT_NEAR(expected[j], x[j], 0.01);
+}
+
+TEST(CSR_matrix, Chebyshev2_symGZ)
+{
+    vec<double> vals = {0.09, 0.18, 0, 0.18, 0.54, 0.09, 0, 0.09, 0.9};
+    Matrix<double> M(vals , 3);
+    CSR_matrix<double> A(M);
+
+    vec<double> x0 = {0, 0, 0};
+    vec<double> b = {0.45, 1.53, 2.88};
+    double tol = 1e-20;
+    vec<double> x = Chebyshev2(A, b, x0, tol, 10000, 0.9, Sym_Gauss_Zejdel_Method<double>);
     vec<double> expected = {1, 2, 3};
     for (std::size_t j = 0; j < 3; ++j)
         EXPECT_NEAR(expected[j], x[j], 0.01);

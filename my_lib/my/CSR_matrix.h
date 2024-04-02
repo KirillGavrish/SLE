@@ -270,7 +270,24 @@ vec<T> Sym_Gauss_Zejdel_Method(CSR_matrix<T> const &A, vec<T> const &b, vec<T> c
     return x;
 }
 
+template <typename T, typename Method> 
+vec<T> Chebyshev2(CSR_matrix<T> const &A, vec<T> const &b, vec<T> const &x0, T const &tol, std::size_t const &Nmax, T const &rho = 0.9, Method method = Simple_Iteration_Method)
+{
+    vec<T> x = x0;
+    x = method(A, b, x, tol, 1);
+    T mu_prev = 1, mu = rho, mu_tmp;
+    for (std::size_t it = 0; it < Nmax; ++it)
+    {
+        mu_tmp = mu;
+        mu = 2 / rho * mu - mu_prev;
+        
+        x = 2 * mu_tmp / (rho * mu) * method(A, b, x, tol, 1) - mu_prev / mu * x;
 
+        if (norm(A*x - b) < tol) break;
+        mu_prev = mu_tmp;
+    }
+    return x;
+}
 /*
 template <typename T>
 std::size_t  Gauss_Zejdel_Method_kr(CSR_matrix<T> const &A, vec<T> const &b, vec<T> const &x0, T const &tol, std::size_t const &Nmax)
