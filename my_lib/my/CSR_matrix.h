@@ -104,7 +104,7 @@ T CSR_matrix<T>::lambda_max() const
 template <typename T>
 vec<T> Simple_Iteration_Method(CSR_matrix<T> const &A, vec<T> const &b, vec<T> const &x0, T const &tol, std::size_t const &Nmax)
 {
-    T tau = 1 / A.lambda_max();
+    T tau = 1 / A.lambda_max(); 
     vec<T> x = x0;
     vec<T> r; 
     for (std::size_t it = 0; it < Nmax; ++it)
@@ -288,6 +288,30 @@ vec<T> Chebyshev2(CSR_matrix<T> const &A, vec<T> const &b, vec<T> const &x0, T c
     }
     return x;
 }
+
+template <typename T>
+vec<T> Conjugate_Gradient_Method(CSR_matrix<T> const &A, vec<T> const &b, vec<T> const &x0, T const &tol)
+{
+    T alpha, beta = 0;
+    vec<T> x = x0;
+    vec<T> r = A * x - b, r_prev;
+    vec<T> d = r;
+    for (std::size_t it = 0; it < x.size(); ++it)                       // вычислительная сложность O(n^2)
+    {                                                                   // по памяти О(n)
+        if (norm(r) < tol) break;                                       //
+                                                                        //
+        alpha = dot(r, r) / dot(d, A * d);                              //
+        x = x - alpha * d;                                              //
+        
+        r_prev = r;
+        r = A * x - b;
+        
+        beta = dot(r, r) / dot(r_prev, r_prev);
+        d = r + beta * d;
+    }
+    return x;
+}
+
 /*
 template <typename T>
 std::size_t  Gauss_Zejdel_Method_kr(CSR_matrix<T> const &A, vec<T> const &b, vec<T> const &x0, T const &tol, std::size_t const &Nmax)
