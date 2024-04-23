@@ -79,3 +79,18 @@ std::ostream& operator<<(std::ostream& os, vec<T> const &vec)
 template <typename T>
 T norm(vec<T> const &v) {return sqrt(dot(v, v));}
 
+template <typename T>
+vec<T> givens_rots(vec<T> const &h, vec<std::pair<T, T>> const &rots)
+{
+    vec<T> res = h; 
+    vec<T> resi = vec<T>(2);
+    for (std::size_t i = 0; i < h.size() - 1; ++i)
+    {
+        resi[0] = rots[i].first * res[i] - rots[i].second * res[i+1];
+        resi[1] = rots[i].second * res[i] + rots[i].first * res[i+1];
+        res[i] = resi[0];
+        res[i+1] = resi[1];
+    }
+    return res;
+}
+

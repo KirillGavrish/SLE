@@ -298,10 +298,10 @@ vec<T> Conjugate_Gradient_Method(CSR_matrix<T> const &A, vec<T> const &b, vec<T>
     vec<T> d = r;
     for (std::size_t it = 0; it < x.size(); ++it)                       // вычислительная сложность O(n^2)
     {                                                                   // по памяти О(n)
-        if (norm(r) < tol) break;                                       //
-                                                                        //
-        alpha = dot(r, r) / dot(d, A * d);                              //
-        x = x - alpha * d;                                              //
+        if (norm(r) < tol) break;                                       
+                                                                        
+        alpha = dot(r, r) / dot(d, A * d);                              
+        x = x - alpha * d;                                              
         
         r_prev = r;
         r = A * x - b;
@@ -312,148 +312,60 @@ vec<T> Conjugate_Gradient_Method(CSR_matrix<T> const &A, vec<T> const &b, vec<T>
     return x;
 }
 
-/*
 template <typename T>
-std::size_t  Gauss_Zejdel_Method_kr(CSR_matrix<T> const &A, vec<T> const &b, vec<T> const &x0, T const &tol, std::size_t const &Nmax)
+vec<T> GMRES_m(CSR_matrix<T> const &A, vec<T> const &b, vec<T> const &x0, T const &tol, std::size_t const &m, std::size_t const &Nmax)
 {
-    vec<T> x = x0;
-    T d;
-
-    for (std::size_t it = 0; it < Nmax; ++it)
+    vec<T> r0, x, x0_, vk, h, h_rots, y, by;                                // по памяти O(n*m)
+    vec<std::pair<T, T>> giv_rots;                                          // вычислительная сложность O(n*m)
+    Matrix<T> V, H;                                                          
+    x = x0;                                                                  
+    for (std::size_t it = 0; it < Nmax; ++it)                                
     {
-        for (std::size_t i = 0; i < x.size(); ++i)
-        {
-            x[i] = b[i];
-            for (std::size_t k = A.get_rows()[i]; k < A.get_rows()[i+1]; ++k)
-            {
-                if (i != A.get_cols()[k])
-                    x[i] -= A.get_vals()[k] * x[A.get_cols()[k]];
-                else
-                    d = A.get_vals()[k];
-            }
-            x[i] /= d;
-        }
+        x0_ = x;
+        r0 = A * x0_ - b;
+        V = Matrix<T>(r0 / norm(r0), 1);
+        H = Matrix<T>(h, 1);
         
-        if (max(A*x - b) < tol) break;
-    }
-
-    vec<T> x1 = x0;
-    
-    std::size_t it = 0;
-    while(norm(x1 - x) > (norm(x)/1000))
-    {
-        for (std::size_t i = 0; i < x1.size(); ++i)
-        {
-            x1[i] = b[i];
-            for (std::size_t k = A.get_rows()[i]; k < A.get_rows()[i+1]; ++k)
-            {
-                if (i != A.get_cols()[k])
-                    x1[i] -= A.get_vals()[k] * x1[A.get_cols()[k]];
-                else
-                    d = A.get_vals()[k];
+        H = Matrix<T>({}, 0);
+        giv_rots = vec<std::pair<T, T>>(0);
+        
+        for (std::size_t k = 0; k < m; ++k)
+        {  
+            vk = A * V.get_col(k);
+            h = vec<T>(0);
+            for (std::size_t i = 0; i < k+1; ++i)
+            {   
+                h.push_back(dot(A * V.get_col(k), V.get_col(i)));
+                vk = vk - h[i] * V.get_col(i);
             }
-            x1[i] /= d;
+            h.push_back(norm(vk));
+            vk = vk / norm(vk);
+
+            h_rots = {h[k], h[k+1]};
+            giv_rots.push_back(std::pair(h_rots[0]/norm(h_rots), (-1)*h_rots[1]/norm(h_rots)));
+            
+            h = givens_rots(h, giv_rots);
+            h.pop_back();
+            H = add_col_H(H, h);
+
+            std::reverse(giv_rots.begin(), giv_rots.end());
+            
+            by = vec<T>(0);
+            by.push_back(norm(r0));
+            for (std::size_t i = 0; i < k ; ++i)
+                by.push_back(0);
+
+            by = givens_rots(by, giv_rots);
+            
+            by = (-1.) * by;
+            y = Inverse_Gauss_Method(H, by);
+
+            x = x0_ + V * y;
+            if (norm(A*x - b) < tol) break;
+
+            V = add_col(V, vk);
         }
-        it++;
     }
-
-
-    return it;
+    return x;
 }
 
-
-template <typename T>
-auto CSR_matrix<T>::insert(std::size_t i, std::size_t j, T val)
-{
-    if (val == T(0))
-        return vals.begin();
-    if ((*this)(i, j) == T(0))
-    {
-        for(std::size_t k = rows[i]; k < rows[i + 1]; ++k)
-            if ((cols[k+1] > j) or ((k + 1) == rows[i+1]))
-            {
-                std::size_t counter = 0;
-                for (auto it = vals.begin(); it != vals.end(); ++it, ++counter)
-                    if (counter == i * max(cols) + j)
-                        {vals.insert(it, val); break;}
-
-                counter = 0;
-                for (auto it = vals.begin(); it != vals.end(); ++it, ++counter)
-                    if (counter == i * max(cols) + j)
-                        {cols.insert(it,   j); break;}
-
-                for (std::size_t s = i; s < rows.size(); ++s)
-                    ++rows[s];
-            }
-        return vals.begin();
-    }
-}
-
-template <typename T>
-auto CSR_matrix<T>::erase(std::size_t i, std::size_t j)
-{
-    if (*this(i, j) == T(0))
-        return *this;
-    else
-    {
-        for(std::size_t k = rows[i]; k < rows[i + 1]; ++k)
-            if (cols[k] == j)
-            {
-                cols.erase(k);
-                vals.erase(k);
-                for (std::size_t s = i; s < rows.size(); ++s)
-                    --rows[s];
-            }
-        return *this;
-    }
-}
-
-
-template <typename T>
-CSR_matrix<T> &CSR_matrix<T>::operator+=(CSR_matrix<T> const &other)
-{
-    for (std::size_t i = 0; i < std::max(rows.size(), other.rows().size()); ++i)
-        for (std::size_t j = 0; j < std::max(max(cols) , max(other.columns())); ++j)
-        {
-            if ((*this(i, j) == T(0))   and  ((*this)(i, j) + other(i, j)) != T(0))
-                {*this = (*this).insert(i, j, (*this)(i, j) + other(i, j)); continue;}
-            if ((*this)(i, j) + other(i, j) == T(0))
-                {*this = (*this).erase(i, j); continue;}
-            if ((*this)(i, j) != T(0))
-                for (std::size_t k = rows[i]; k < rows[i + 1]; ++k)
-                    if (cols[k] == j) vals[k] += other(i, j);
-        }
-    return *this;
-}
-
-template <typename T>
-CSR_matrix<T> &CSR_matrix<T>::operator-=(CSR_matrix<T> const &other)
-{
-    for (std::size_t i = 0; i < std::max(rows.size(), other.rows().size()); ++i)
-        for (std::size_t j = 0; j < std::max(max(cols) , max(other.columns())); ++j)
-        {
-            if ((*this(i, j) == T(0))   and  ((*this)(i, j) - other(i, j)) != T(0))
-                {*this = (*this).insert(i, j, (*this)(i, j) - other(i, j)); continue;}
-            if ((*this)(i, j) - other(i, j) == T(0))
-                {*this = (*this).erase(i, j); continue;}
-            if ((*this)(i, j) != T(0))
-                for (std::size_t k = rows[i]; k < rows[i + 1]; ++k)
-                    if (cols[k] == j) vals[k] -= other(i, j);
-        }
-    return *this;
-}
-
-template <typename T>
-CSR_matrix<T> &CSR_matrix<T>::operator*=(CSR_matrix<T> const &other)
-{
-    for (std::size_t i = 0; i < std::max(rows.size(), other.rows().size()); ++i)
-        for (std::size_t j = 0; j < std::max(max(cols) , max(other.columns())); ++j)
-        {
-            if ((*this)(i, j) * other(i, j) != T(0))
-                {*this = (*this).insert(i, j, (*this)(i, j) * other(i, j)); continue;}
-            if (((*this)(i, j) * other(i, j)) == T(0))
-                {*this = (*this).erase(i, j); continue;}
-        }
-    return *this;
-}
-*/

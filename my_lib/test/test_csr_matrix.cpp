@@ -237,6 +237,37 @@ TEST(CSR_matrix, Chebyshev2_symGZ)
     for (std::size_t j = 0; j < 3; ++j)
         EXPECT_NEAR(expected[j], x[j], 0.01);
 }
+
+TEST(CSR_matrix, GMRES_m_1)
+{
+    vec<double> vals = {1, 2, 0, 2, 6, 2, 9, 1, 10};
+    Matrix<double> M(vals , 3);
+    CSR_matrix<double> A(M);
+
+    vec<double> x0 = {4, 4, 4};
+    vec<double> b = {5, 20, 41};
+    double tol = 0.1;
+    vec<double> x = GMRES_m(A, b, x0, tol, 3, 100);
+    vec<double> expected = {1, 2, 3};
+    for (std::size_t j = 0; j < 3; ++j)
+        EXPECT_NEAR(expected[j], x[j], 0.05);
+}
+
+TEST(CSR_matrix, GMRES_m_2)
+{
+    vec<double> vals = {1, 2, 0, 2, 6, 1, 0, 1, 10};
+    Matrix<double> M(vals , 3);
+    CSR_matrix<double> A(M);
+
+    vec<double> x0 = {4, 4, 4};
+    vec<double> b = {5, 17, 32};
+    double tol = 1e-20;
+    vec<double> x = GMRES_m(A, b, x0, tol, 3, 100);
+    vec<double> expected = {1, 2, 3};
+    for (std::size_t j = 0; j < 3; ++j)
+        EXPECT_NEAR(expected[j], x[j], 0.05);
+}
+
 /*
 TEST(CSR_matrix, kr5)
 {

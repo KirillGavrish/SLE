@@ -1,8 +1,8 @@
 #include <gtest/gtest.h>
 
 #include "../my/vec.h"
-//#include <my/Matrix.h>
-//#include <my/CSR_matrix.h>
+#include <../my/Matrix.h>
+#include <../my/CSR_matrix.h>
 
 
 TEST(vec, add) 
@@ -54,4 +54,14 @@ TEST(vec, max)
     vec<int> a = {1, 4};
     int c = max(a);
     EXPECT_EQ(c, 4);
+}
+
+TEST(vec, givens_rots)
+{
+    vec<double> h_rots = {8.38087, 1.91594};
+    vec<std::pair<double, double>> giv_rots = vec<std::pair<double, double>>(0);
+    giv_rots.push_back(std::pair(h_rots[0]/norm(h_rots), (-1)*h_rots[1]/norm(h_rots)));
+
+    h_rots = givens_rots(h_rots, giv_rots);
+    EXPECT_NEAR(0, h_rots[1], 0.0001);
 }
