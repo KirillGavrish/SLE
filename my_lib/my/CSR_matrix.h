@@ -324,7 +324,6 @@ vec<T> GMRES_m(CSR_matrix<T> const &A, vec<T> const &b, vec<T> const &x0, T cons
         x0_ = x;
         r0 = A * x0_ - b;
         V = Matrix<T>(r0 / norm(r0), 1);
-        H = Matrix<T>(h, 1);
         
         H = Matrix<T>({}, 0);
         giv_rots = vec<std::pair<T, T>>(0);
