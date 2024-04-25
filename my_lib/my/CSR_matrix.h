@@ -328,36 +328,34 @@ vec<T> GMRES_m(CSR_matrix<T> const &A, vec<T> const &b, vec<T> const &x0, T cons
         H = Matrix<T>({}, 0);
         giv_rots = vec<std::pair<T, T>>(0);
         
-        for (std::size_t k = 0; k < m; ++k)
+        for (std::size_t k = 1; k <= m; ++k)
         {  
-            vk = A * V.get_col(k);
-            h = vec<T>(0);
-            for (std::size_t i = 0; i < k+1; ++i)
+            vk = A * V.get_col(k-1);
+            h = vec<T>(k+1);
+            for (std::size_t i = 0; i < k; ++i)
             {   
-                h.push_back(dot(A * V.get_col(k), V.get_col(i)));
+                h[i] = dot(A * V.get_col(k-1), V.get_col(i));     
                 vk = vk - h[i] * V.get_col(i);
             }
-            h.push_back(norm(vk));
-            vk = vk / norm(vk);
+            h[k] = norm(vk); 
+            vk = vk / h[k];
 
-            h_rots = {h[k], h[k+1]};
+            h_rots = {h[k-1], h[k]};
             giv_rots.push_back(std::pair(h_rots[0]/norm(h_rots), (-1)*h_rots[1]/norm(h_rots)));
             
-            h = givens_rots(h, giv_rots);
+            h = givens_rots(h, giv_rots); 
             h.pop_back();
+            
             H = add_col_H(H, h);
 
-            std::reverse(giv_rots.begin(), giv_rots.end());
+            by = vec<T>(k);
+            by[0] = norm(r0); 
+            for (std::size_t i = 1; i < k ; ++i) by[i] = 0; 
             
-            by = vec<T>(0);
-            by.push_back(norm(r0));
-            for (std::size_t i = 0; i < k ; ++i)
-                by.push_back(0);
-
+            std::reverse(giv_rots.begin(), giv_rots.end());
             by = givens_rots(by, giv_rots);
             
-            by = (-1.) * by;
-            y = Inverse_Gauss_Method(H, by);
+            y = Inverse_Gauss_Method(H, (-1.)*by);
 
             x = x0_ + V * y;
             if (norm(A*x - b) < tol) break;
@@ -367,4 +365,3 @@ vec<T> GMRES_m(CSR_matrix<T> const &A, vec<T> const &b, vec<T> const &x0, T cons
     }
     return x;
 }
-
